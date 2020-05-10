@@ -16,7 +16,7 @@ def main():
         api.update_status("Hi " + str(since_id))
         since_id = since_id+1
         logger.info("Waiting...")
-        time.sleep(180)
+        time.sleep(60*60*6)
 
 if __name__ == "__main__":
     main()
