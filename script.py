@@ -13,7 +13,7 @@ def main():
     api = tweepy.API(auth)
     since_id = 1
     while True:
-        api.update_status("Hii" + str(since_id))
+        api.update_status("Hi " + str(since_id))
         since_id = since_id+1
         logger.info("Waiting...")
         time.sleep(180)
