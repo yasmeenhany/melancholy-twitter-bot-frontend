@@ -20,7 +20,7 @@ def main():
         if (now.hour == 22 and now.minute == 12) or (now.hour == 4 and now.minute == 0):
             api.update_status("Hi " + now)
             since_id = since_id+1
-            logger.info("Waiting..."))
+            logger.info("Waiting...")
 
 if __name__ == "__main__":
     main()
