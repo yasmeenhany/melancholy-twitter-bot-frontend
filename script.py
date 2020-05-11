@@ -2,6 +2,7 @@ import tweepy
 import logging
 import os
 import time
+import datetime
 
 logger = logging.getLogger()
 
@@ -13,9 +14,11 @@ def main():
     api = tweepy.API(auth)
     since_id = 2
     while True:
-        api.update_status("Hi " + str(since_id))
-        since_id = since_id+1
-        logger.info("Waiting...")
+        now = datetime.datetime.now().time()
+        if now.hour == 22 and now.minute == 0:
+            api.update_status("Hi " + "10 pm")
+            since_id = since_id+1
+            logger.info("Waiting...")
         time.sleep(60*60*4)
 
 if __name__ == "__main__":
