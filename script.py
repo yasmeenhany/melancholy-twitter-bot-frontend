@@ -18,7 +18,7 @@ def main():
         now = datetime.datetime.now().time()
         if (now.hour == 22 and now.minute == 25) or (now.hour == 16 and now.minute == 0):
             api.update_status("hi from " + str(now))
-        print(now.hour + "," + now.minute)
+        print(str(now.hour) + "," + str(now.minute))
 
 if __name__ == "__main__":
     main()
