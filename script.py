@@ -6,8 +6,8 @@ import time
 logger = logging.getLogger()
 
 def main():
-    auth = tweepy.OAuthHandler("BDVShCnQXMk9wa2xM0AwV1KAK", "vbOj1ngtQs7keRMSXDCJfFDtPK2Eh20N8fhw5ollIxVuyr1oEE")
-    auth.set_access_token("1222834478445408256-t7mcEiLMNa7w6Sw4wOKXrskDRlBiTo", "ftxdMWZKYZUGnp5ymbKe56JOYbO1yIu2jYS7sYeSssWLa")
+    auth = tweepy.OAuthHandler(os.environ['TWITTER_CONSUMER_KEY'], os.environ['TWITTER_CONSUMER_SECRET'])
+    auth.set_access_token(os.environ['ACCESS_KEY'], os.environ['ACCESS_SECRET'])
 
     # Create API object
     api = tweepy.API(auth)
@@ -16,7 +16,7 @@ def main():
         api.update_status("Hi " + str(since_id))
         since_id = since_id+1
         logger.info("Waiting...")
-        time.sleep(60*60*6)
+        time.sleep(60)
 
 if __name__ == "__main__":
     main()
