@@ -16,9 +16,8 @@ def main():
     api = tweepy.API(auth)
     while True:
         now = datetime.datetime.now().time()
-        if (now.hour == 22 and now.minute == 25) or (now.hour == 16 and now.minute == 0):
+        if (now.hour == 20 and now.minute == 26) or (now.hour == 14 and now.minute == 0):
             api.update_status("hi from " + str(now))
-        print(str(now.hour) + "," + str(now.minute))
 
 if __name__ == "__main__":
     main()
