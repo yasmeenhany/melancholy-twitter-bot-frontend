@@ -11,7 +11,7 @@ def main():
 
     # Create API object
     api = tweepy.API(auth)
-    since_id = 1
+    since_id = 2
     while True:
         api.update_status("Hi " + str(since_id))
         since_id = since_id+1
