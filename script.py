@@ -51,7 +51,7 @@ def main():
     baseURL = 'https://a7zan-bot.herokuapp.com/'
     while True:
         now = datetime.datetime.now().time()
-        if (now.hour == 20 and now.minute == 0) or (now.hour == 14 and now.minute == 0):
+        if (now.hour == 20 and now.minute == 0) or (now.hour == 17 and now.minute == 0):
             try:
                 resp = requests.get(baseURL + 'latestSong')
                 if resp.status_code == 200:
