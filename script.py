@@ -82,8 +82,6 @@ def timed_tweets(baseURL, api):
             resp = requests.post(baseURL + 'updateIndex')
 
         time.sleep(62)
-    else:
-        print("I AM IN")
 
 
 def main():
@@ -91,14 +89,14 @@ def main():
     auth.set_access_token(os.environ['ACCESS_KEY'], os.environ['ACCESS_SECRET'])
 
     # Global Variables
-    api = tweepy.API(auth)
+    api = tweepy.API(auth,wait_on_rate_limit=True,wait_on_rate_limit_notify=True)
     baseURL = 'https://a7zan-bot.herokuapp.com/'
     since_id = 1;
     now = datetime.datetime.now().time()
     # tweepy.debug(True)
 
     while True:
-        if now.minute % 20 == 0 and not ((now.hour == 20 and now.minute == 0) or (now.hour == 14 and now.minute == 0)):
+        if not ((now.hour == 20 and now.minute == 0) or (now.hour == 14 and now.minute == 0)):
             since_id = check_mentions(baseURL, api, since_id)
         timed_tweets(baseURL, api)
 
