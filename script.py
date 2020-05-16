@@ -36,6 +36,7 @@ class MyStreamListener(tweepy.StreamListener):
                 link = data['url']
                 reply_text = link + " Requested By: @" + tweet.user.screen_name
                 self.api.update_status(reply_text)
+                self.api.create_favorite(tweet.id)
             else:
                 reply_text = "The song you asked for was not found, please try another song"
                 self.api.update_status(
