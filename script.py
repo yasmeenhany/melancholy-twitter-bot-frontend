@@ -8,16 +8,24 @@ import re
 
 logger = logging.getLogger()
 
+auth = tweepy.OAuthHandler(os.environ['TWITTER_CONSUMER_KEY'], os.environ['TWITTER_CONSUMER_SECRET'])
+auth.set_access_token(os.environ['ACCESS_KEY'], os.environ['ACCESS_SECRET'])
+
+# Global Variables
+api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+
 
 class MyStreamListener(tweepy.StreamListener):
 
-    def on_status(self, tweet):
-        baseURL = 'https://a7zan-bot.herokuapp.com/'
-        print(tweet.text)
+    def on_error(self, status_code):
+        print(status_code)
+        return False
 
-        print(tweet.text)
+    def on_status(self, tweet):
+        self.api = api
+        baseURL = 'https://a7zan-bot.herokuapp.com/'
         text = tweet.text
-        textRegex = re.compile(re.escape('@a7zanbot'), re.IGNORECASE)
+        textRegex = re.compile(re.escape('@a7zanbot '), re.IGNORECASE)
         text = textRegex.sub('', text)
         if re.match(
                 "[wW][oO][uU][lL][dD] [yY][oO][uU] [kK][iI][nN][dD][lL][yY] [pP][lL][aA][yY] .* [bB][yY] .*",
@@ -40,16 +48,16 @@ class MyStreamListener(tweepy.StreamListener):
             else:
                 reply_text = "The song you asked for was not found, please try another song"
                 self.api.update_status(
-                    status=reply_text,
-                    in_reply_to_status_id=tweet.id,
-                )
+                     status=reply_text,
+                     in_reply_to_status_id=tweet.id
+                 )
         else:
             reply_text = 'Please use the following format when you request a song: Would you ' \
                          'kindly play {song name} by {artist}'
             self.api.update_status(
-                status=reply_text,
-                in_reply_to_status_id=tweet.id,
-            )
+                 status=reply_text,
+                 in_reply_to_status_id=tweet.id
+             )
 
 
 # def check_mentions(baseURL, api, since_id):
@@ -118,7 +126,7 @@ def timed_tweets(baseURL, api):
                 data = resp.json()
                 link = data['url']
                 artist = data['artist']
-                #print(link)
+                # print(link)
                 api.update_status(link + " #" + ''.join(e for e in artist if e.isalnum()))
         except tweepy.RateLimitError:
             print('sleep 15 minutes')
@@ -135,16 +143,18 @@ def timed_tweets(baseURL, api):
 
 
 def main():
-    auth = tweepy.OAuthHandler(os.environ['TWITTER_CONSUMER_KEY'], os.environ['TWITTER_CONSUMER_SECRET'])
-    auth.set_access_token(os.environ['ACCESS_KEY'], os.environ['ACCESS_SECRET'])
-
-    # Global Variables
-    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
     baseURL = 'https://a7zan-bot.herokuapp.com/'
-    #tweepy.debug(True)
-    myStreamListener = MyStreamListener()
-    myStream = tweepy.Stream(auth=api.auth, listener=myStreamListener)
-    myStream.filter(track=['@a7zanbot'], is_async=True)
+    tweepy.debug(True)
+    myStreamListener = MyStreamListener(api)
+    myStream = tweepy.Stream(auth=auth, listener=myStreamListener)
+
+    try:
+        print('Start streaming.')
+        myStream.filter(track=['@a7zanbot would you kindly play'], is_async=True, filter_level='low')
+    except KeyboardInterrupt as e:
+        print("Stopped.")
+        myStream.disconnect()
+
     while True:
         timed_tweets(baseURL, api)
 
