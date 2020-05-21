@@ -48,16 +48,16 @@ class MyStreamListener(tweepy.StreamListener):
             else:
                 reply_text = "The song you asked for was not found, please try another song"
                 self.api.update_status(
-                     status=reply_text,
-                     in_reply_to_status_id=tweet.id
-                 )
+                    status=reply_text,
+                    in_reply_to_status_id=tweet.id
+                )
         else:
             reply_text = 'Please use the following format when you request a song: Would you ' \
                          'kindly play {song name} by {artist}'
             self.api.update_status(
-                 status=reply_text,
-                 in_reply_to_status_id=tweet.id
-             )
+                status=reply_text,
+                in_reply_to_status_id=tweet.id
+            )
 
 
 # def check_mentions(baseURL, api, since_id):
@@ -116,6 +116,28 @@ class MyStreamListener(tweepy.StreamListener):
 #     else:
 #         return new_since_id
 
+def get_build_message(baseURL, api):
+    try:
+        resp = requests.get(baseURL + 'getBuildStatus')
+        if resp.status_code == 200:
+            data = resp.json()
+            available = data['available']
+            if not available:
+                return;
+            else:
+                announcement = data['text']
+                data['available'] = False
+                data['text'] = ''
+                api.update_status(announcement)
+                requests.post(url=baseURL+'updateBuildStatus', json=data)
+    except tweepy.RateLimitError:
+        print('sleep 15 minutes')
+        time.sleep(900)
+    except tweepy.TweepError as e:
+        print(e)
+    except Exception as e:
+        print(e)
+
 
 def timed_tweets(baseURL, api):
     now = datetime.datetime.now().time()
@@ -126,7 +148,6 @@ def timed_tweets(baseURL, api):
                 data = resp.json()
                 link = data['url']
                 artist = data['artist']
-                # print(link)
                 api.update_status(link + " #" + ''.join(e for e in artist if e.isalnum()))
         except tweepy.RateLimitError:
             print('sleep 15 minutes')
@@ -147,7 +168,7 @@ def main():
     tweepy.debug(True)
     myStreamListener = MyStreamListener(api)
     myStream = tweepy.Stream(auth=auth, listener=myStreamListener)
-
+    get_build_message(baseURL, api)
     try:
         print('Start streaming.')
         myStream.filter(track=['@a7zanbot would you kindly play'], is_async=True, filter_level='low')
