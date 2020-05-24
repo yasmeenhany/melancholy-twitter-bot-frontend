@@ -13,6 +13,7 @@ auth.set_access_token(os.environ['ACCESS_KEY'], os.environ['ACCESS_SECRET'])
 
 # Global Variables
 api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+baseURL = 'http://localhost:3000/'
 
 
 class MyStreamListener(tweepy.StreamListener):
@@ -23,7 +24,7 @@ class MyStreamListener(tweepy.StreamListener):
 
     def on_status(self, tweet):
         self.api = api
-        baseURL = 'https://a7zan-bot.herokuapp.com/'
+
         text = tweet.text
         textRegex = re.compile(re.escape('@a7zanbot '), re.IGNORECASE)
         text = textRegex.sub('', text)
@@ -35,16 +36,24 @@ class MyStreamListener(tweepy.StreamListener):
             if m and m2:
                 song_name = m.group(1)
                 artist = m2.group(1)
-                song_name.replace(' ', '%')
-
+                song_name.replace(' ', '%20')
+                artist.replace(' ', '%20')
+            requests.post(baseURL + 'updateAPI')
             payload = {'query': song_name, 'artistName': artist}
             resp = requests.get(baseURL + 'getSongByArtist', params=payload)
             if resp.status_code == 200:
                 data = resp.json()
                 link = data['url']
-                reply_text = link + " Requested By: @" + tweet.user.screen_name
-                self.api.update_status(reply_text)
+                artist = data['artist']
+                name = data['title']
+                reply_text = "Requested By: @" + tweet.user.screen_name + " " + link
+                tweetResponse = self.api.update_status(reply_text)
                 self.api.create_favorite(tweet.id)
+                spotifyUrl = requests.get(baseURL + 'getSongByArtistSpotify', params=payload)
+                if spotifyUrl.status_code == 200:
+                    spotifyData = spotifyUrl.json()
+                    self.api.update_status(status=spotifyData['songUrl'], in_reply_to_status_id=tweetResponse.id)
+
             else:
                 reply_text = "The song you asked for was not found, please try another song"
                 self.api.update_status(
@@ -116,7 +125,7 @@ class MyStreamListener(tweepy.StreamListener):
 #     else:
 #         return new_since_id
 
-def get_build_message(baseURL, api):
+def get_build_message(api):
     try:
         resp = requests.get(baseURL + 'getBuildStatus')
         if resp.status_code == 200:
@@ -129,7 +138,7 @@ def get_build_message(baseURL, api):
                 data['available'] = False
                 data['text'] = ''
                 api.update_status(announcement)
-                requests.post(url=baseURL+'updateBuildStatus', json=data)
+                requests.post(url=baseURL + 'updateBuildStatus', json=data)
     except tweepy.RateLimitError:
         print('sleep 15 minutes')
         time.sleep(900)
@@ -139,16 +148,23 @@ def get_build_message(baseURL, api):
         print(e)
 
 
-def timed_tweets(baseURL, api):
+def timed_tweets(api):
     now = datetime.datetime.now().time()
     if (now.hour == 20 and now.minute == 00) or (now.hour == 14 and now.minute == 0):
         try:
+            requests.post(baseURL + 'updateAPI')
             resp = requests.get(baseURL + 'latestSong')
             if resp.status_code == 200:
                 data = resp.json()
                 link = data['url']
                 artist = data['artist']
-                api.update_status(link + " #" + ''.join(e for e in artist if e.isalnum()))
+                name = data['title']
+                tweetResponse = api.update_status(link + " #" + ''.join(e for e in artist if e.isalnum()))
+                spotifyUrl = requests.get(baseURL + 'getSongByArtistSpotify')
+                if spotifyUrl.status_code == 200:
+                    spotifyData = spotifyUrl.json()
+                    api.update_status(status=spotifyData['songUrl'], in_reply_to_status_id=tweetResponse.id)
+
         except tweepy.RateLimitError:
             print('sleep 15 minutes')
             time.sleep(900)
@@ -164,11 +180,10 @@ def timed_tweets(baseURL, api):
 
 
 def main():
-    baseURL = 'https://a7zan-bot.herokuapp.com/'
     tweepy.debug(True)
     myStreamListener = MyStreamListener(api)
     myStream = tweepy.Stream(auth=auth, listener=myStreamListener)
-    get_build_message(baseURL, api)
+    get_build_message(api)
     try:
         print('Start streaming.')
         myStream.filter(track=['@a7zanbot would you kindly play'], is_async=True, filter_level='low')
@@ -177,7 +192,7 @@ def main():
         myStream.disconnect()
 
     while True:
-        timed_tweets(baseURL, api)
+        timed_tweets(api)
 
 
 if __name__ == "__main__":
