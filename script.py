@@ -13,7 +13,7 @@ auth.set_access_token(os.environ['ACCESS_KEY'], os.environ['ACCESS_SECRET'])
 
 # Global Variables
 api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
-baseURL = 'http://localhost:3000/'
+baseURL = 'https://a7zan-bot.herokuapp.com/'
 
 
 class MyStreamListener(tweepy.StreamListener):
@@ -49,6 +49,7 @@ class MyStreamListener(tweepy.StreamListener):
                 reply_text = "Requested By: @" + tweet.user.screen_name + " " + link
                 tweetResponse = self.api.update_status(reply_text)
                 self.api.create_favorite(tweet.id)
+                payload = {'query': name.replace('%2520', '%20'), 'artistName': artist.replace('%2520', '%20')}
                 spotifyUrl = requests.get(baseURL + 'getSongByArtistSpotify', params=payload)
                 if spotifyUrl.status_code == 200:
                     spotifyData = spotifyUrl.json()
@@ -132,7 +133,7 @@ def get_build_message(api):
             data = resp.json()
             available = data['available']
             if not available:
-                return;
+                return
             else:
                 announcement = data['text']
                 data['available'] = False
@@ -160,7 +161,8 @@ def timed_tweets(api):
                 artist = data['artist']
                 name = data['title']
                 tweetResponse = api.update_status(link + " #" + ''.join(e for e in artist if e.isalnum()))
-                spotifyUrl = requests.get(baseURL + 'getSongByArtistSpotify')
+                payload = {'query': name.replace('%2520', '%20'), 'artistName': artist.replace('%2520', '%20')}
+                spotifyUrl = requests.get(baseURL + 'getSongByArtistSpotify', params=payload)
                 if spotifyUrl.status_code == 200:
                     spotifyData = spotifyUrl.json()
                     api.update_status(status=spotifyData['songUrl'], in_reply_to_status_id=tweetResponse.id)
@@ -180,7 +182,7 @@ def timed_tweets(api):
 
 
 def main():
-    tweepy.debug(True)
+    #tweepy.debug(True)
     myStreamListener = MyStreamListener(api)
     myStream = tweepy.Stream(auth=auth, listener=myStreamListener)
     get_build_message(api)
