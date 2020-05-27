@@ -29,7 +29,7 @@ class MyStreamListener(tweepy.StreamListener):
         textRegex = re.compile(re.escape('@a7zanbot '), re.IGNORECASE)
         text = textRegex.sub('', text)
         if re.match(
-                "[wW][oO][uU][lL][dD] [yY][oO][uU] [kK][iI][nN][dD][lL][yY] [pP][lL][aA][yY] .* [bB][yY] .*",
+                " *[wW][oO][uU][lL][dD] [yY][oO][uU] [kK][iI][nN][dD][lL][yY] [pP][lL][aA][yY] .* [bB][yY] .*",
                 text):
             m = re.search('[pP][lL][aA][yY] (.*) [bB][yY]', text)
             m2 = re.search('[bB][yY] (.*)', text)
@@ -56,13 +56,13 @@ class MyStreamListener(tweepy.StreamListener):
                     self.api.update_status(status=spotifyData['songUrl'], in_reply_to_status_id=tweetResponse.id)
 
             else:
-                reply_text = "The song you asked for was not found, please try another song"
+                reply_text = '@'+tweet.user.screen_name+" The song you asked for was not found, please try another song"
                 self.api.update_status(
                     status=reply_text,
                     in_reply_to_status_id=tweet.id
                 )
         else:
-            reply_text = 'Please use the following format when you request a song: Would you ' \
+            reply_text = '@'+tweet.user.screen_name+' Please use the following format when you request a song: Would you ' \
                          'kindly play {song name} by {artist}'
             self.api.update_status(
                 status=reply_text,
