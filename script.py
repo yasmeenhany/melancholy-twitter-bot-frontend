@@ -5,6 +5,7 @@ import time
 import datetime
 import requests
 import re
+from http.client import IncompleteRead
 
 logger = logging.getLogger()
 
@@ -19,12 +20,13 @@ baseURL = 'https://a7zan-bot.herokuapp.com/'
 class MyStreamListener(tweepy.StreamListener):
 
     def on_error(self, status_code):
-        print(status_code)
-        return False
+        if status_code == '420':
+            print(status_code)
+            time.sleep(900)
+            return False
 
     def on_status(self, tweet):
         self.api = api
-
         text = tweet.text
         textRegex = re.compile(re.escape('@a7zanbot '), re.IGNORECASE)
         text = textRegex.sub('', text)
@@ -56,14 +58,14 @@ class MyStreamListener(tweepy.StreamListener):
                     self.api.update_status(status=spotifyData['songUrl'], in_reply_to_status_id=tweetResponse.id)
 
             else:
-                reply_text = '@'+tweet.user.screen_name+" The song you asked for was not found, please try another song"
+                reply_text = '@' + tweet.user.screen_name + " The song you asked for was not found, please try another song"
                 self.api.update_status(
                     status=reply_text,
                     in_reply_to_status_id=tweet.id
                 )
         else:
-            reply_text = '@'+tweet.user.screen_name+' Please use the following format when you request a song: Would you ' \
-                         'kindly play {song name} by {artist}'
+            reply_text = '@' + tweet.user.screen_name + ' Please use the following format when you request a song: Would you ' \
+                                                        'kindly play {song name} by {artist}'
             self.api.update_status(
                 status=reply_text,
                 in_reply_to_status_id=tweet.id
@@ -161,6 +163,7 @@ def timed_tweets(api):
                 artist = data['artist']
                 name = data['title']
                 tweetResponse = api.update_status(link + " #" + ''.join(e for e in artist if e.isalnum()))
+                resp = requests.post(baseURL + 'updateIndex')
                 payload = {'query': name.replace('%2520', '%20'), 'artistName': artist.replace('%2520', '%20')}
                 spotifyUrl = requests.get(baseURL + 'getSongByArtistSpotify', params=payload)
                 if spotifyUrl.status_code == 200:
@@ -176,25 +179,32 @@ def timed_tweets(api):
             print(e)
         else:
             pass
-            resp = requests.post(baseURL + 'updateIndex')
 
         time.sleep(62)
 
 
 def main():
-    #tweepy.debug(True)
+    # tweepy.debug(True)
     myStreamListener = MyStreamListener(api)
     myStream = tweepy.Stream(auth=auth, listener=myStreamListener)
     get_build_message(api)
-    try:
-        print('Start streaming.')
-        myStream.filter(track=['@a7zanbot would you kindly play'], is_async=True, filter_level='low')
-    except KeyboardInterrupt as e:
-        print("Stopped.")
-        myStream.disconnect()
 
     while True:
         timed_tweets(api)
+        try:
+            if not myStream.running:
+                print("Stream is up")
+                myStream.filter(track=['@a7zanbot would you kindly play'], is_async=True, filter_level='low',
+                            stall_warnings=True)
+        except KeyboardInterrupt as e:
+            print("Stopped.")
+            myStream.disconnect()
+        except IncompleteRead as e:
+            print('Stream down, restarting...')
+            continue
+        except Exception as e:
+            print(e)
+            continue
 
 
 if __name__ == "__main__":
