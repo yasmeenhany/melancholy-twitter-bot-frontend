@@ -153,7 +153,7 @@ def get_build_message(api):
 
 def timed_tweets(api):
     now = datetime.datetime.now().time()
-    if (now.hour == 20 and now.minute == 00) or (now.hour == 14 and now.minute == 0):
+    if (now.hour == 21 and now.minute == 00) or (now.hour == 14 and now.minute == 0):
         try:
             requests.post(baseURL + 'updateAPI')
             resp = requests.get(baseURL + 'latestSong')
