@@ -9,13 +9,14 @@ from http.client import IncompleteRead
 
 logger = logging.getLogger()
 
+# Comment if testing ONLY
 auth = tweepy.OAuthHandler(os.environ['TWITTER_CONSUMER_KEY'], os.environ['TWITTER_CONSUMER_SECRET'])
 auth.set_access_token(os.environ['ACCESS_KEY'], os.environ['ACCESS_SECRET'])
 
 # Global Variables
 api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+# Comment if testing ONLY
 baseURL = 'https://a7zan-bot.herokuapp.com/'
-
 
 class MyStreamListener(tweepy.StreamListener):
 
@@ -28,6 +29,7 @@ class MyStreamListener(tweepy.StreamListener):
     def on_status(self, tweet):
         self.api = api
         text = tweet.text
+        # Comment if testing ONLY
         textRegex = re.compile(re.escape('@a7zanbot '), re.IGNORECASE)
         text = textRegex.sub('', text)
         if re.match(
@@ -56,6 +58,9 @@ class MyStreamListener(tweepy.StreamListener):
                 if spotifyUrl.status_code == 200:
                     spotifyData = spotifyUrl.json()
                     self.api.update_status(status=spotifyData['songUrl'], in_reply_to_status_id=tweetResponse.id)
+                songID = link.split('/song/')[1]
+                playlist_payload = {'songID': songID, 'songURI': spotifyData['uri'] }
+                requests.get(baseURL + 'updateAccumulatorPlaylist',params= playlist_payload )
 
             else:
                 reply_text = '@' + tweet.user.screen_name + " The song you asked for was not found, please try another song"
@@ -170,6 +175,10 @@ def timed_tweets(api):
                     spotifyData = spotifyUrl.json()
                     api.update_status(status=spotifyData['songUrl'], in_reply_to_status_id=tweetResponse.id)
 
+                songID = link.split('/song/')[1]
+                playlist_payload = {'songID': songID, 'songURI': spotifyData['uri'] }
+                requests.get(baseURL + 'updateAccumulatorPlaylist',params= playlist_payload )
+
         except tweepy.RateLimitError:
             print('sleep 15 minutes')
             time.sleep(900)
@@ -194,6 +203,7 @@ def main():
         try:
             if not myStream.running:
                 print("Stream is up")
+               # Comment if testing ONLY 
                 myStream.filter(track=['@a7zanbot would you kindly play'], is_async=True, filter_level='low',
                             stall_warnings=True)
         except KeyboardInterrupt as e:
