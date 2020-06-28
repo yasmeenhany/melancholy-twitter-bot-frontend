@@ -30,7 +30,7 @@ class MyStreamListener(tweepy.StreamListener):
         self.api = api
         text = tweet.text
         # Comment if testing ONLY
-        textRegex = re.compile(re.escape('@a7zanbot '), re.IGNORECASE)
+        textRegex = re.compile(re.escape('@a7zanbot'), re.IGNORECASE)
         text = textRegex.sub('', text)
         if re.match(
                 " *[wW][oO][uU][lL][dD] [yY][oO][uU] [kK][iI][nN][dD][lL][yY] [pP][lL][aA][yY] .* [bB][yY] .*",
@@ -182,12 +182,14 @@ def timed_tweets(api):
                 resp = requests.post(baseURL + 'updateIndex')
                 payload = {'query': name.replace('%2520', '%20'), 'artistName': artist.replace('%2520', '%20')}
                 spotifyUrl = requests.get(baseURL + 'getSongByArtistSpotify', params=payload)
+                spotifyUri=""
                 if spotifyUrl.status_code == 200:
                     spotifyData = spotifyUrl.json()
                     api.update_status(status=spotifyData['songUrl'], in_reply_to_status_id=tweetResponse.id)
+                    spotifyUri = spotifyData['uri']
 
                 songID = link.split('/song/')[1]
-                playlist_payload = {'songID': songID, 'songURI': spotifyData['uri'] }
+                playlist_payload = {'songID': songID, 'songURI': spotifyUri}
                 requests.get(baseURL + 'updateAccumulatorPlaylist',params= playlist_payload )
 
         except tweepy.RateLimitError:
